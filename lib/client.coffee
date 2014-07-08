@@ -14,6 +14,9 @@ module.exports = class SocketPoolClient
     @streamSize = streamSize || STREAM_SIZE
     @serverPort = serverPort || SERVER_PORT
     @socketPool = []
+    @partialBuffer = null
+
+    @init()
 
   init: ->
     @initPool().then initStreams
@@ -55,5 +58,14 @@ module.exports = class SocketPoolClient
         return {stream, tunnel}
 
   process: (buf, stream)->
-    # get all msn
-    # callback with related data
+    if @partialBuffer
+      combinedBuffer = Buffer.concat [@partialBuffer, buf]
+    else
+      combinedBuffer = buf
+
+    results = protocol.fromBuffer combinedBuffer
+    @partialBuffer = results.buffer
+
+    if results.dataArray.length > 0
+      decoded = _.map results.dataArray, (s) -> protocol.decode (s)
+      _.each decoded, (d) -> stream.tunnels[d.msn].callback d.content
