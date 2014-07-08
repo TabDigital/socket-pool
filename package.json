@@ -1,0 +1,7 @@
+{
+  "name": "socket-pool",
+  "dependencies": {
+    "lodash": "~2.2.1",
+    "bison-types": "^2.0.4"
+  }
+}
