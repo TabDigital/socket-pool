@@ -3,11 +3,28 @@ net = require 'net'
 
 module.exports = class SocketPoolServer
 
-  constructor: () ->
-    net.createServer (c)->
-      c.on 'data', (msg) ->
-        @process msg, c
+  constructor: (func) ->
+    @partialBuffer = null
 
-  process: (msg, c) ->
-    # decode msg to pieces of data
-    # loop { c.write data }
+    net.createServer (stream)->
+      stream.on 'data', (buf) ->
+        @process buf, stream, func
+
+  process: (buf, stream, func) ->
+    # fromBuffer to get pieces of data
+    # results = func data
+    # loop { stream.write toBuf(encode results  }
+    #
+    if @partialBuffer
+      combinedBuffer = Buffer.concat [@partialBuffer, buf]
+    else
+      combinedBuffer = buf
+
+    results = protocol.fromBuffer combinedBuffer
+    @partialBuffer = results.buffer
+
+    if results.dataArray.length > 0
+      decoded = _.map results.dataArray, (s) -> protocol.decode (s)
+      _.each decoded, (d) -> 
+        responseData = func(d.content)
+        stream.write protocol.toBuffer(protocol.encode d.msn, responseData)
