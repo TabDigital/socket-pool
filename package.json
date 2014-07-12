@@ -2,6 +2,13 @@
   "name": "socket-pool",
   "dependencies": {
     "lodash": "~2.2.1",
-    "bison-types": "^2.0.4"
+    "bison-types": "^2.0.4",
+    "coffee-script": "~1.7.1"
+  },
+  "devDependencies": {
+    "should": "^4.0.4"
+  },
+  "scripts": {
+    "test": "./node_modules/.bin/mocha"
   }
 }
