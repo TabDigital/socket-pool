@@ -3,10 +3,12 @@
   "dependencies": {
     "lodash": "~2.2.1",
     "bison-types": "^2.0.4",
-    "coffee-script": "~1.7.1"
+    "coffee-script": "~1.7.1",
+    "q": "^1.0.1"
   },
   "devDependencies": {
-    "should": "^4.0.4"
+    "should": "^4.0.4",
+    "sinon": "^1.10.3"
   },
   "scripts": {
     "test": "./node_modules/.bin/mocha"

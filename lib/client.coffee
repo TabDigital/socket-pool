@@ -5,7 +5,7 @@ protocol = require './protocol'
 
 module.exports = class SocketPoolClient
 
-  POOL_SIZE = 100
+  POOL_SIZE = 20
   STREAM_SIZE = 256
   SERVER_PORT = 8889
 
@@ -16,10 +16,9 @@ module.exports = class SocketPoolClient
     @socketPool = []
     @partialBuffer = null
 
-    @init()
-
-  init: ->
-    @initPool().then initStreams
+  init: (callback)=>
+    @initPool().then () =>
+      @initStreams(callback)
 
   initPool:  ->
     poolSize = @poolSize
@@ -27,14 +26,13 @@ module.exports = class SocketPoolClient
     deferred = Q.defer()
 
     while poolSize--
-      stream = net.connect {port: @serverPort}, () ->
-        @socketPool.push stream
+      @socketPool[poolSize] = net.connect {port: @serverPort}, () ->
         if poolSize == 0
           deferred.resolve()
 
     return deferred.promise
 
-  initStreams: () =>
+  initStreams: (callback) ->
     for stream in @socketPool
       stream.tunnels = []
 
@@ -45,6 +43,8 @@ module.exports = class SocketPoolClient
 
       stream.on 'data', (buf) =>
         @process buf, stream
+
+    callback()
 
   send: (content, callback) ->
     @pick.tunnel.callback = callback
