@@ -36,7 +36,7 @@ module.exports = class SocketPoolClient
     for stream in @socketPool
       stream.tunnels = []
 
-      for i in [0..STREAM_SIZE-1]
+      for i in [0..@streamSize-1]
         stream.tunnels[i] =
           msn:      i
           callback: null
