@@ -46,10 +46,10 @@ module.exports = class SocketPoolClient
 
     callback()
 
-  send: (content, callback) ->
-    @pick.tunnel.callback = callback
-    encoded = protocol.encode(@pick.tunnel.msn, content)
-    @pick.stream.write protocol.toBuffer(encoded)
+  send: (content, callback) =>
+    @pick().tunnel.callback = callback
+    encoded = protocol.encode(@pick().tunnel.msn, content)
+    @pick().stream.write protocol.toBuffer(encoded)
 
   pick: ->
     for stream in @socketPool
