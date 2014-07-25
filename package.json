@@ -6,6 +6,7 @@
     "coffee-script": "~1.7.1",
     "q": "^1.0.1"
   },
+  "main": "src/index.js",
   "devDependencies": {
     "should": "^4.0.4",
     "sinon": "^1.10.3"
