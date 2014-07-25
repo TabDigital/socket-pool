@@ -19,20 +19,21 @@ module.exports = class SocketPoolClient
   init: (callback)=>
     @initPool().then () =>
       @initStreams(callback)
+  
+  initPool:  =>
+    connects = _.map [0..@poolSize - 1], @connect
 
-  initPool:  ->
-    poolSize = @poolSize
+    Q.all connects
 
+  connect: (i) =>
     deferred = Q.defer()
 
-    while poolSize--
-      @socketPool[poolSize] = net.connect {port: @serverPort}, () ->
-        if poolSize == 0
-          deferred.resolve()
+    @socketPool[i] = net.connect {port: @serverPort}, () ->
+      deferred.resolve() 
 
     return deferred.promise
 
-  initStreams: (callback) ->
+  initStreams: (callback) =>
     for stream in @socketPool
       stream.tunnels = []
 
@@ -41,31 +42,40 @@ module.exports = class SocketPoolClient
           msn:      i
           callback: null
 
-      stream.on 'data', (buf) =>
-        @process buf, stream
+      that = this
+
+      stream.on 'data', (buf) ->
+
+        if that.partialBuffer?.length > 0
+          combinedBuffer = Buffer.concat [that.partialBuffer, buf]
+        else
+          combinedBuffer = buf
+
+        results = protocol.fromBuffer combinedBuffer
+        that.partialBuffer = results.buffer
+
+        if results.dataArray.length > 0
+          decoded = _.map results.dataArray, (s) -> protocol.decode (s)
+
+          # bind to stream
+          me = this
+
+          _.each decoded, (d) -> 
+            me.tunnels[d.msn].callback(d.content)
+            me.tunnels[d.msn].callback = null
 
     callback()
 
-  send: (content, callback) =>
-    @pick().tunnel.callback = callback
-    encoded = protocol.encode(@pick().tunnel.msn, content)
-    @pick().stream.write protocol.toBuffer(encoded)
+  send: (content, callback) ->
+    picked = @pick()
+    picked.tunnel.callback = callback
+    encoded = protocol.encode(picked.tunnel.msn, content)
+    picked.stream.write protocol.toBuffer(encoded)
 
   pick: ->
     for stream in @socketPool
       tunnel = _.find stream.tunnels, (t) -> !t.callback
+
       if tunnel
         return {stream, tunnel}
 
-  process: (buf, stream)->
-    if @partialBuffer?.length > 0
-      combinedBuffer = Buffer.concat [@partialBuffer, buf]
-    else
-      combinedBuffer = buf
-
-    results = protocol.fromBuffer combinedBuffer
-    @partialBuffer = results.buffer
-
-    if results.dataArray.length > 0
-      decoded = _.map results.dataArray, (s) -> protocol.decode (s)
-      _.each decoded, (d) -> stream.tunnels[d.msn].callback d.content
