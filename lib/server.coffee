@@ -1,9 +1,10 @@
-net = require 'net'
-
+net      = require 'net'
+_        = require 'lodash'
+protocol = require './protocol'
 
 module.exports = class SocketPoolServer
 
-  constructor: (func) ->
+  constructor: () ->
     @partialBuffer = null
 
     net.createServer (stream)->
@@ -15,7 +16,7 @@ module.exports = class SocketPoolServer
     # results = func data
     # loop { stream.write toBuf(encode results  }
     #
-    if @partialBuffer
+    if @partialBuffer?.length > 0
       combinedBuffer = Buffer.concat [@partialBuffer, buf]
     else
       combinedBuffer = buf

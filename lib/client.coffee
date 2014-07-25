@@ -58,7 +58,7 @@ module.exports = class SocketPoolClient
         return {stream, tunnel}
 
   process: (buf, stream)->
-    if @partialBuffer
+    if @partialBuffer?.length > 0
       combinedBuffer = Buffer.concat [@partialBuffer, buf]
     else
       combinedBuffer = buf
